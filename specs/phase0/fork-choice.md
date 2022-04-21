@@ -442,7 +442,8 @@ def on_block(store: Store, signed_block: SignedBeaconBlock) -> None:
         store.justified_checkpoint = state.current_justified_checkpoint
 
     # Update unrealized justified checkpoint
-    unrealized_checkpoints_state = process_justification_and_finalization(state.copy())
+    unrealized_checkpoints_state = state.copy()
+    process_justification_and_finalization(unrealized_checkpoints_state)
     unrealized_justified_checkpoint = unrealized_checkpoints_state.current_justified_checkpoint
     store.unrealized_justified_checkpoint[block_root] = unrealized_justified_checkpoint
     unrealized_finalized_checkpoint = unrealized_checkpoints_state.finalized_checkpoint
