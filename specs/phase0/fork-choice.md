@@ -105,6 +105,8 @@ class Store(object):
     block_states: Dict[Root, BeaconState] = field(default_factory=dict)
     checkpoint_states: Dict[Checkpoint, BeaconState] = field(default_factory=dict)
     latest_messages: Dict[ValidatorIndex, LatestMessage] = field(default_factory=dict)
+    unrealized_justified_checkpoint: Dict[Root, Checkpoint] = field(default_factory=dict)
+    unrealized_finalized_checkpoint: Dict[Root, Checkpoint] = field(default_factory=dict)
 ```
 
 #### `get_forkchoice_store`
@@ -132,6 +134,8 @@ def get_forkchoice_store(anchor_state: BeaconState, anchor_block: BeaconBlock) -
         blocks={anchor_root: copy(anchor_block)},
         block_states={anchor_root: copy(anchor_state)},
         checkpoint_states={justified_checkpoint: copy(anchor_state)},
+        unrealized_justified_checkpoint={anchor_root: anchor_state.current_justified_checkpoint},
+        unrealized_finalized_checkpoint={anchor_root: anchor_state.finalized_checkpoint},
     )
 ```
 
@@ -222,11 +226,11 @@ def filter_block_tree(store: Store, block_root: Root, blocks: Dict[Root, BeaconB
 
     correct_justified = (
         store.justified_checkpoint.epoch == GENESIS_EPOCH
-        or head_state.current_justified_checkpoint == store.justified_checkpoint
+        or store.unrealized_justified_checkpoint[block_root] == store.justified_checkpoint
     )
     correct_finalized = (
         store.finalized_checkpoint.epoch == GENESIS_EPOCH
-        or head_state.finalized_checkpoint == store.finalized_checkpoint
+        or store.unrealized_finalized_checkpoint[block_root] == store.finalized_checkpoint
     )
     # If expected finalized/justified, add to viable block-tree and signal viability to parent.
     if correct_justified and correct_finalized:
@@ -412,11 +416,12 @@ def on_block(store: Store, signed_block: SignedBeaconBlock) -> None:
 
     # Check the block is valid and compute the post-state
     state = pre_state.copy()
+    block_root = hash_tree_root(block)
     state_transition(state, signed_block, True)
     # Add new block to the store
-    store.blocks[hash_tree_root(block)] = block
+    store.blocks[block_root] = block
     # Add new state for this block to the store
-    store.block_states[hash_tree_root(block)] = state
+    store.block_states[block_root] = state
 
     # Add proposer score boost if the block is timely
     time_into_slot = (store.time - store.genesis_time) % SECONDS_PER_SLOT
@@ -435,6 +440,13 @@ def on_block(store: Store, signed_block: SignedBeaconBlock) -> None:
     if state.finalized_checkpoint.epoch > store.finalized_checkpoint.epoch:
         store.finalized_checkpoint = state.finalized_checkpoint
         store.justified_checkpoint = state.current_justified_checkpoint
+
+    # Update unrealized justified checkpoint
+    unrealized_checkpoints_state = process_justification_and_finalization(state.copy())
+    unrealized_justified_checkpoint = unrealized_checkpoints_state.current_justified_checkpoint
+    store.unrealized_justified_checkpoint[block_root] = unrealized_justified_checkpoint
+    unrealized_finalized_checkpoint = unrealized_checkpoints_state.finalized_checkpoint
+    store.unrealized_finalized_checkpoint[block_root] = unrealized_finalized_checkpoint
 ```
 
 #### `on_attestation`
