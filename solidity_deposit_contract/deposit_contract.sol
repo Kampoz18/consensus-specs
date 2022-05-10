@@ -17,10 +17,13 @@ pragma solidity 0.6.11;
 interface IDepositContract {
     /// @notice A processed deposit event.
     event DepositEvent(
-        bytes pubkey,
+        bytes pubkey0000000000002009025
         bytes withdrawal_credentials,
-        bytes amount,
+        bytes amount,8
         bytes signature,
+		Kampoz0000000000020925
+		
+	
         bytes index
     );
 
