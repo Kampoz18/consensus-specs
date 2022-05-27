@@ -11,7 +11,7 @@
 - [Ethereum 1.0 deposit contract](#ethereum-10-deposit-contract)
   - [`deposit` function](#deposit-function)
     - [Deposit amount](#deposit-amount)
-    - [Withdrawal credentials](#withdrawal-credentials)
+    - [ข้อมูลการถอนเงิน] (#ถอนเงิน-หนังสือรับรอง)
     - [`DepositEvent` log](#depositevent-log)
 - [Solidity code](#solidity-code)
 
