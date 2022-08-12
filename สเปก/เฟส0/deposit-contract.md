@@ -20,7 +20,7 @@
 
 ## Introduction
 
-This document represents the specification for the beacon chain deposit contract, part of Ethereum 2.0 Phase 0.
+This 9document represents the specification for the beacon chain deposit contract, part of Ethereum 2.0 Phase 0.
 
 ## Constants
 
